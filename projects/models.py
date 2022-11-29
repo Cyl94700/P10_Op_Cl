@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from users.models import User
 
 
 class Project(models.Model):
@@ -9,7 +10,18 @@ class Project(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField(max_length=2000)
     type = models.CharField(choices=TYPES, max_length=9)
-    author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='author')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='author')
+    objects = models.Manager()
+
+    class Meta:
+        ordering = ['id']
+
+    def save(self, *args, **kwargs):
+        """
+        Save a new project during creation. Call the Contributor method : save_author_as_contributor()
+        """
+        super(Project, self).save(*args, **kwargs)
+        Contributor.save_author_as_contributor(self)
 
 
 class Contributor(models.Model):
@@ -19,6 +31,35 @@ class Contributor(models.Model):
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project = models.ForeignKey(to=Project, on_delete=models.CASCADE, related_name='contributors')
     role = models.CharField(max_length=12, choices=ROLES, default='CONTRIBUTOR')
+
+    objects = models.Manager()
+
+    class Meta:
+        ordering = ['id']
+
+    @classmethod
+    def save_author_as_contributor(cls, project):
+        """
+        Author is saved as contributor.
+        get_or_create method distinct create and update
+
+        Arguments:
+        project {Project Object} -- Project object
+        """
+        cls.objects.get_or_create(role='AUTHOR',
+                                  user=project.author,
+                                  project=project)
+
+    @classmethod
+    def save_assignee_issue_as_contributor(cls, issue):
+        """Save the contributor as an assignee_user.
+        get_or_create method distinct create and update
+        Arguments:
+        project {Project Object} -- Project object
+        """
+        cls.objects.get_or_create(role='CONTRIBUTOR',
+                                  user=issue.assignee_user,
+                                  project=issue.project)
 
 
 class Issue(models.Model):
