@@ -4,7 +4,7 @@ from .models import Contributor
 
 
 class IsAuthorProject(BasePermission):
-    message = "Seul l'auteur d'un projet peut mettre à jour ou supprimer son projet."
+    message = "Seul l'auteur d'un projet peut modifier et/ou supprimer son projet."
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
@@ -13,14 +13,13 @@ class IsAuthorProject(BasePermission):
 
 
 class IsContributorProject(BasePermission):
-    message = "Seuls les contributeurs d'un projet peuvent accéder aux \
+    message = "Seuls les contributeurs d'un projet peuvent lire les \
 problèmes et commentaires de ce projet et en créer de nouveaux. Seuls les \
-auteurs peuvent supprimer les problèmes ou commentaires."
+auteurs peuvent modifier et supprimer les problèmes ou commentaires."
 
     def has_permission(self, request, view):
         """
-        Allow to view list project, issue or comment, and to add project,
-        issue or comment.
+        Allow to read list project, issue or comment and add one of them
         Arguments:
         request {[type]} -- contain post data
         view {[type]} -- current view
@@ -44,7 +43,7 @@ auteurs peuvent supprimer les problèmes ou commentaires."
 
     def has_object_permission(self, request, view, obj):
         """
-        allow to retrieve, update or delete project, issue or comment.
+        allow to read, update or delete project, issue or comment.
         Arguments:
         request {[type]} -- contain post data
         view {[type]} -- current view

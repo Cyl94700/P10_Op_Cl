@@ -1,12 +1,14 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from .models import Project, Contributor
+from .models import Project, Contributor, Issue, Comment
 from .permissions import IsAuthorProject, IsContributorProject, CanManageContributors
 
 
 from .serializers import (
     ProjectSerializer,
-    ContributorsSerializer
+    ContributorsSerializer,
+    IssueSerializer,
+    CommentSerializer
 )
 
 
@@ -58,3 +60,55 @@ class ContributorsViewSet(ModelViewSet):
         project = self.kwargs['project_id']
         project = Project.objects.get(id=project)
         serializer.save(project=project)
+
+
+class IssueViewSet(ModelViewSet):
+
+    serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated, IsContributorProject]
+
+    def perform_create(self, serializer):
+        """The author is automaticaly saved as the authenticated user.
+        The project_id is authomaticaly saved using the project_id in the url
+        endpoint.
+
+        Arguments:
+            serializer  -- CommentSerializer
+        """
+        project = self.kwargs['project_id']
+        project = Project.objects.get(id=project)
+        serializer.save(author=self.request.user, project=project)
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the issues
+        as determined by the project_id portion of the URL.
+        """
+        project = self.kwargs['project_id']
+        return Issue.objects.filter(project=project)
+
+
+class CommentViewSet(ModelViewSet):
+
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsContributorProject]
+
+    def perform_create(self, serializer):
+        """The author is automaticaly saved as the authenticated user.
+        The issue_id is authomaticaly saved using the issue_id in the url
+        endpoint.
+
+        Arguments:
+            serializer  -- CommentSerializer
+        """
+        issue = self.kwargs['issue_id']
+        issue = Issue.objects.get(id=issue)
+        serializer.save(author=self.request.user, issue=issue)
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the comments
+        as determined by the issue_id portion of the URL.
+        """
+        issue = self.kwargs['issue_id']
+        return Comment.objects.filter(issue=issue)
