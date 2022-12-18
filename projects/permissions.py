@@ -63,7 +63,7 @@ nouveaux contributeurs."
 
     def has_permission(self, request, view):
         """
-        allow to view list contributors and create new contributor.
+        allow to view list contributors and create or delete contributor.
         Arguments:
             request {[type]} -- contain post data
             view {[type]} -- current view

@@ -2,6 +2,10 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from .models import Project, Contributor, Issue, Comment
 from .permissions import IsAuthorProject, IsContributorProject, CanManageContributors
+from rest_framework.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework import status
 
 
 from .serializers import (
@@ -55,11 +59,32 @@ class ContributorsViewSet(ModelViewSet):
         """
         Add a contributor in a project and put the project-id in url.
         Arguments:
-        serializer  -- CommentSerializer
+        serializer --ContributorSerializer
         """
         project = self.kwargs['project_id']
         project = Project.objects.get(id=project)
-        serializer.save(project=project)
+
+        contributor_users = [user.user for user in Contributor.objects.filter(project=project)]
+
+        user_to_add = self.request.data.get('user')
+
+        # Contributor not in project ?
+        if user_to_add in str(contributor_users):
+            raise ValidationError("Ce contributeur est déjà associé au projet")
+        else:
+            serializer.save(project=project)
+
+    def destroy(self, request, *args, **kwargs):
+        contributor = get_object_or_404(Contributor, pk=self.kwargs['pk'])
+        role_to_delete = contributor.role
+        if role_to_delete == "AUTHOR":
+            raise ValidationError("Un auteur ne peut pas être supprimé")
+        else:
+            contributor.delete()
+            return Response(
+                {"Le contributeur a bien été supprimé"},
+                status=status.HTTP_204_NO_CONTENT
+            )
 
 
 class IssueViewSet(ModelViewSet):
@@ -73,11 +98,30 @@ class IssueViewSet(ModelViewSet):
         endpoint.
 
         Arguments:
-            serializer  -- CommentSerializer
+            serializer  -- IssueSerializer
         """
         project = self.kwargs['project_id']
         project = Project.objects.get(id=project)
-        serializer.save(author=self.request.user, project=project)
+        possible_assignee_users = [user.user for user in Contributor.objects.filter(project=project)]
+
+        assignee_to_add = self.request.data.get('assignee')
+
+        # Assignee not in project ?
+        if assignee_to_add not in str(possible_assignee_users):
+            raise ValidationError("L'utilisateur assigné ne fait pas parti du projet")
+        else:
+            serializer.save(author=self.request.user, project=project)
+
+    def perform_update(self, serializer):
+        project = self.kwargs['project_id']
+        project = Project.objects.get(id=project)
+        possible_assignee_users = [user.user for user in Contributor.objects.filter(project=project)]
+        assignee_to_update = self.request.data.get('assignee')
+        # Assignee not in project ?
+        if assignee_to_update not in str(possible_assignee_users):
+            raise ValidationError("L'utilisateur assigné ne fait pas parti du projet")
+        else:
+            serializer.save(author=self.request.user, project=project)
 
     def get_queryset(self):
         """
