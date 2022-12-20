@@ -161,4 +161,30 @@ Différents outils permettent de naviguer dans l'API :
 
 <div id="heading--3-1"/>
 
+#### 3.1 Tests
+Pour lancer les tests, supprimez le dossier htmlcov présent à la racine.
+Le fichier pytest.ini est configuré pour exécuter pytest et coverage en même temps.
+Depuis le terminal, il suffit de taper :
+
+     pytest
+
+Le terminal indique en vert le nombre de tests réussis.
+Puis, consultez le résulat dans le htmlcov nouvellement créé en ouvrant le fichier index.html avec un navigateur.
+
+![coverage](images/coverage.png)
+
 <div id="heading--3-2"/>
+
+#### 3.2 Rapport flake8
+
+Pour vérifier la cohérence du code avec la norme PEP8, vous pouvez lancer flake8-html et générer un rapport html.
+Supprimez le dossier flake8_report situé à la racine du projet.
+Depuis le terminal, placez-vous à la racine du projet et tapez :
+ 
+
+      flake8 --format=html --htmldir=flake8_report
+
+
+Le dossier flake8_report est de nouveau généré. Il contient le rapport global dans un fichier nommé index.html
+
+![flake8](images/flake8.png)

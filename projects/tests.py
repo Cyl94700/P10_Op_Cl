@@ -64,7 +64,15 @@ def user1_project(client: APIClient, user1):
 
 
 @pytest.fixture
-def user1_issue_project(client: APIClient, user1, user1_project, user2):
+def user1_project_contributor(client, user1, user1_project, user2):
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
+    response = client.post('/projects/1/users/',
+                           {'role': 'CONTRIBUTOR',
+                            'user': 'User_2'}, format='json')
+
+
+@pytest.fixture
+def user1_issue_project(client: APIClient, user1, user1_project, user2, user1_project_contributor):
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
     return client.post('/projects/1/issues/',
                        {'title': 'Problème 1',
@@ -108,7 +116,7 @@ def test_post_new_project(client, user1):
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
     response = client.post('/projects/', {
         'title': 'Projet 1',
-        'description': 'Montest du projet 1',
+        'description': 'Mon test du projet 1',
         'type': 'BACKEND'}, format='json')
     assert response.status_code == 201
 
@@ -123,16 +131,54 @@ def test_get_project1(client, user1, user1_issue_project):
 # ###########################################################################
 
 
-def test_issues_post(client, user1, user1_project, user2):
+def test_issues_post_user_in_project(client, user1, user1_project, user2, user1_project_contributor):
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
     response = client.post('/projects/1/issues/',
                            {'title': 'Premier problème',
-                            'description': "problème 1 de l'issue 1",
+                            'description': 'problème 1 de l\'issue 1',
                             'tag': 'BUG',
                             'priority': 'LOW',
                             'status': 'TODO',
                             'assignee': 'User_2'})
     assert response.status_code == 201
+
+
+def test_issues_post_user_not_in_project(client, user1, user1_project, user_intruder, user1_project_contributor):
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
+    response = client.post('/projects/1/issues/',
+                           {'title': 'Premier problème',
+                            'description': 'problème 1 de l\'issue 1',
+                            'tag': 'BUG',
+                            'priority': 'LOW',
+                            'status': 'TODO',
+                            'assignee': 'Intruder'})
+    assert response.status_code == 400
+
+
+def test_issues_put_user_in_project(client, user1, user1_project, user1_issue_project, user2,
+                                    user1_project_contributor):
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
+    response = client.put('/projects/1/issues/1/',
+                           {'title': 'Premier problème_v2',
+                            'description': 'problème 1 de l\'issue 1_v2',
+                            'tag': 'BUG',
+                            'priority': 'HIGH',
+                            'status': 'IN PROGRESS',
+                            'assignee': 'User_1'})
+    assert response.status_code == 200
+
+
+def test_issues_put_user_not_in_project(client, user1, user1_project, user1_issue_project, user_intruder,
+                                        user1_project_contributor):
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
+    response = client.put('/projects/1/issues/1/',
+                           {'title': 'Premier problème_v2',
+                            'description': 'problème 1 de l\'issue 1_v2',
+                            'tag': 'BUG',
+                            'priority': 'HIGH',
+                            'status': 'IN PROGRESS',
+                            'assignee': 'Intruder'})
+    assert response.status_code == 400
 
 
 def test_get_issue1_project1(client, user1, user1_issue_project):
@@ -147,7 +193,7 @@ def test_delete_issue_non_authorized(client, user_intruder, user1_issue_project)
     assert response.status_code == 403
 
 
-def test_delete_issue_autjorized(client, user1, user1_issue_project):
+def test_delete_issue_authorized(client, user1, user1_issue_project):
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
     response = client.delete('/projects/1/issues/1/')
     assert response.status_code == 204
@@ -182,7 +228,7 @@ def test_delete_comments_authorized(client, user1, user1_comment_issue_project):
     assert response.status_code == 204
 
 # ###########################################################################
-# ############################ Tests COMMENTS  ##############################
+# ############################ Tests USERS  ##############################
 # ###########################################################################
 
 
@@ -192,12 +238,20 @@ def test_get_user1_project1(client, user1, user1_project):
     assert response.status_code == 200
 
 
-def test_get_users_project1(client, user1, user1_project, user2):
+def test_post_users_project1(client, user1, user1_project, user2):
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
     response = client.post('/projects/1/users/',
                            {'role': 'CONTRIBUTOR',
                             'user': 'User_2'})
     assert response.status_code == 201
+
+
+def test_post_users_already_exists_project1(client, user1, user1_project, user2, user1_project_contributor):
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
+    response = client.post('/projects/1/users/',
+                           {'role': 'CONTRIBUTOR',
+                            'user': 'User_2'})
+    assert response.status_code == 400
 
 
 def test_delete_contributors_non_authorized(client, user_intruder, user1_project):
@@ -206,7 +260,13 @@ def test_delete_contributors_non_authorized(client, user_intruder, user1_project
     assert response.status_code == 403
 
 
-def test_delete_contributors_authorized(client, user1, user1_project):
+def test_delete_contributors_authorized(client, user1, user1_project, user2, user1_project_contributor):
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
+    response = client.delete('/projects/1/users/2/')
+    assert response.status_code == 204
+
+
+def test_delete_contributors_role_non_authorized(client, user1, user1_project, user2, user1_project_contributor):
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + user1)
     response = client.delete('/projects/1/users/1/')
-    assert response.status_code == 204
+    assert response.status_code == 400
