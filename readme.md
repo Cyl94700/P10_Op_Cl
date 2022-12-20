@@ -131,6 +131,8 @@ Différents outils permettent de naviguer dans l'API :
 
 #### 2.2 Liste des points de terminaison
 
+ Vous pouvez consulter la [documentation Postman](https://documenter.getpostman.com/view/22081221/2s8YzZPJoR) pour obtenir
+ plus d'informations sur le fonctionnement de ces points de terminaison.
 
 | #   | *Point de terminaison d'API*                                              | *Méthode HTTP* | *URL (base: http://127.0.0.1:8000)*       |
 |-----|---------------------------------------------------------------------------|----------------|-------------------------------------------|
