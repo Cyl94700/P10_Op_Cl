@@ -169,7 +169,7 @@ Depuis le terminal, il suffit de taper :
      pytest
 
 Le terminal indique en vert le nombre de tests réussis.
-Puis, consultez le résulat dans le htmlcov nouvellement créé en ouvrant le fichier index.html avec un navigateur.
+Puis, consultez le résultat dans le htmlcov nouvellement créé en ouvrant le fichier index.html avec un navigateur.
 
 ![coverage](images/coverage.png)
 
